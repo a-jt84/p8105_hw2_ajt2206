@@ -11,7 +11,7 @@ library(tidyverse)
 
 
 
-##Problem 1
+## Problem 1
 
 Importing data into R
 ```{r}
@@ -48,9 +48,11 @@ pols_df=
  
 ```
 
-##Problem 2
+## Problem 2
 
 **Reading and Cleaning the Mr. Trash Wheel data**
+
+Prior to importing the Mr. Trash Wheel data into R, I checked the excel file. The "Year" column had an error where the numeric year was stored as text. I converted the column data to numeric format within Excel (Professor and Gwynnda already had these values stored as numeric). 
 
 ```{r}
 mr_trash_df=
@@ -94,3 +96,27 @@ gwynnda_trash_df=
  select(wheel, everything())
 ```
 Same steps as described above for Mr. Trash Wheel data were repeated for the Professor and Gwynnda Trash Wheels. 
+
+**Combining the three datasets**
+```{r}
+triple_trash_df=
+  bind_rows(mr_trash_df, prof_trash_df, gwynnda_trash_df)
+```
+
+**Description of the Data**
+
+* This dataset provides data from May 2014 to August 2018 on the trash collected by three Trash Wheels situated in the Inner Harbor in Baltimore, Maryland. 
+
+* There are `r nrow(triple_trash_df)` observations and `r ncol(triple_trash_df)` variables within this dataset. 
+
+* The variables are as follows `r names(triple_trash_df)`. 
+
+* Key variables include the following. `wheel`: identifies which of the three trash wheels the row corresponds to. `weight_tons`: how much trash in tons in each dumpster. `homes_powered`: an estimation of how many Maryland homes are powered by the trash collected per dumpster. 
+
+* Total weight of trash collected by Professor Trash Wheel is tons. `sum(prof_trash_df, weight_tons)`
+
+* Total number of cigarette butts collected by Gwynnda is July of 2021: 
+
+## Problem 3
+
+
