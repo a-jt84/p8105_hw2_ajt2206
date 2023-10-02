@@ -120,8 +120,8 @@ triple_trash_df=
 ## Problem 3
 
 ```{r}
-MCI_baseline_df=
-  readxl::read_excel("data/MCI_baseline.xlsx", range="A2:F485") |> 
+mci_baseline_df=
+  readxl::read_excel("data/mci_baseline.xlsx", range="A2:F485") |> 
   janitor::clean_names() |> 
   mutate(
     sex= case_match(
@@ -135,10 +135,38 @@ MCI_baseline_df=
       0 ~ "Non-carrier",
       1 ~ "Carrier")
   ) |> 
-  filter(!(age_at_onset == "."))
+  filter(current_age != age_at_onset)
+
+women_df=
+  mci_baseline_df[mci_baseline_df$sex == "Female", ]
+
+women_carrier_df=
+  women_df[women_df$apoe4 == "Carrier", ]
 ```
 **Description of the import process and dataset**
 
-`r nrow(MCI_baseline_df)` participants met the inclusion criteria of the study and were included in the data.  
+`r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r sum((mci_baseline_df$age_at_onset != "."))`went on to develop mci. The average baseline age is `r mean(mci_baseline_df$current_age)` years old. `r nrow(women_carrier_df)/nrow(women_df)* 100`% of the women in the study are APOE4 carriers. 
 
-Discuss important steps in the import process and relevant features of the dataset. How many participants were recruited, and of these how many develop MCI? What is the average baseline age? What proportion of women in the study are APOE4 carriers?
+```{r}
+mci_amyloid_df=
+  readxl::read_excel("data/mci_amyloid.xlsx", range="A2:F489") |> 
+  janitor::clean_names() |> 
+  rename(id=study_id)
+
+
+  pivot_longer(
+    baseline:time_8,
+    names_to = "study_period",
+    values_to = "time_elapsed",
+  )
+```
+
+Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values; comment on the steps on the import process and the features of the dataset.
+
+Check whether some participants appear in only the baseline or amyloid datasets, and comment on your findings. Combine the demographic and biomarker datasets so that only participants who appear in both datasets are retained, and briefly describe the resulting dataset; export the result as a CSV to your data directory
+
+```{r}
+mci_combined_df=
+  inner_join(mci_baseline_df, mci_amyloid_df, by= "id")
+```
+
