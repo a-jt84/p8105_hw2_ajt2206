@@ -56,7 +56,7 @@ Prior to importing the Mr. Trash Wheel data into R, I checked the excel file. Th
 
 ```{r}
 mr_trash_df=
-  readxl::read_excel("data/202207 Trash Wheel Collection Data.xlsx", sheet= "Mr. Trash Wheel", range="A2:N549") |> 
+  readxl::read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet= "Mr. Trash Wheel", range="A2:N586") |> 
   janitor::clean_names() |> 
   mutate(homes_powered= weight_tons*500/30) |>
   mutate(homes_powered= round(homes_powered)) |> 
@@ -80,7 +80,7 @@ To read-in and clean up the Mr. Trash Wheel data set, I performed the following 
 **Reading and Cleaning the Professor and Gwynnda Trash Wheel Data**
 ```{r}
 prof_trash_df=
-  readxl::read_excel("data/202207 Trash Wheel Collection Data.xlsx", sheet= "Professor Trash Wheel", range="A2:M96") |> 
+  readxl::read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet= "Professor Trash Wheel", range="A2:M108") |> 
   janitor::clean_names() |> 
   mutate(homes_powered= weight_tons*500/30) |> 
   mutate(homes_powered= round(homes_powered)) |>
@@ -88,7 +88,7 @@ prof_trash_df=
  select(wheel, everything())
 
 gwynnda_trash_df=
-  readxl::read_excel("data/202207 Trash Wheel Collection Data.xlsx", sheet= "Gwynnda Trash Wheel", range="A2:K108") |> 
+  readxl::read_excel("data/202309 Trash Wheel Collection Data.xlsx", sheet= "Gwynnda Trash Wheel", range="A2:L157") |> 
   janitor::clean_names() |> 
   mutate(homes_powered= weight_tons*500/30) |> 
   mutate(homes_powered= round(homes_powered)) |>
