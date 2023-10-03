@@ -113,9 +113,9 @@ triple_trash_df=
 
 * Key variables include the following. `wheel`: identifies which of the three trash wheels the row corresponds to. `weight_tons`: how much trash in tons in each dumpster. `homes_powered`: an estimation of how many Maryland homes are powered by the trash collected per dumpster. 
 
-* Total weight of trash collected by Professor Trash Wheel is tons. `sum(prof_trash_df, weight_tons)`
+* Total weight of trash collected by Professor Trash Wheel in tons. `r filter(triple_trash_df, wheel== "Professor Trash Wheel") |> pull(weight_tons) |> sum()`
 
-* Total number of cigarette butts collected by Gwynnda is July of 2021: 
+* Total number of cigarette butts collected by Gwynnda is July of 2021: `r filter(triple_trash_df, wheel== "Gwynnda Trash Wheel", month == "July", year == "2021") |> pull(cigarette_butts) |> sum()`
 
 ## Problem 3
 
@@ -136,29 +136,16 @@ mci_baseline_df=
       1 ~ "Carrier")
   ) |> 
   filter(current_age != age_at_onset)
-
-women_df=
-  mci_baseline_df[mci_baseline_df$sex == "Female", ]
-
-women_carrier_df=
-  women_df[women_df$apoe4 == "Carrier", ]
 ```
 **Description of the import process and dataset**
 
-`r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r sum((mci_baseline_df$age_at_onset != "."))`went on to develop mci. The average baseline age is `r mean(mci_baseline_df$current_age)` years old. `r nrow(women_carrier_df)/nrow(women_df)* 100`% of the women in the study are APOE4 carriers. 
+`r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r filter(mci_baseline_df, age_at_onset != ".") |> nrow()` went on to develop mci. The average baseline age is `r mci_baseline_df |> pull(current_age) |> mean()` years old. `r filter(mci_baseline_df, sex == "Female", apoe4 == "Carrier") |> nrow() / filter(mci_baseline_df, sex == "Female") |> nrow() * 100` % of the women in the study are APOE4 carriers. 
 
 ```{r}
 mci_amyloid_df=
   readxl::read_excel("data/mci_amyloid.xlsx", range="A2:F489") |> 
   janitor::clean_names() |> 
   rename(id=study_id)
-
-
-  pivot_longer(
-    baseline:time_8,
-    names_to = "study_period",
-    values_to = "time_elapsed",
-  )
 ```
 
 Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values; comment on the steps on the import process and the features of the dataset.
