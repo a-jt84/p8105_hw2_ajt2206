@@ -65,7 +65,7 @@ mr_trash_df=
 ```
 To read-in and clean up the Mr. Trash Wheel data set, I performed the following steps:
 
-1. Used the `readxl` to read in the data, restricting the import to only include the Mr. Trash Wheel sheet and to rows with data. 
+1. Used the `readxl` to read in the data, restricting the import to only include the Mr. Trash Wheel sheet and to columns/rows with data. 
 
 1. `clean_names()` was used to make sure all the imported variables were consistently named. 
 
@@ -110,7 +110,6 @@ To combine the datasets, I used the `bind_rows()` function. The datasets were es
 * This dataset provides data from May 2014 to August 2018 on the trash collected by three Trash Wheels situated in the Inner Harbor in Baltimore, Maryland. There are `r nrow(triple_trash_df)` observations and `r ncol(triple_trash_df)` variables within this dataset. The variables are as follows `r names(triple_trash_df)`. Key variables include the following. `wheel`: identifies which of the three trash wheels the row corresponds to. `weight_tons`: how much trash in tons in each dumpster. `homes_powered`: an estimation of how many Maryland homes are powered by the trash collected per dumpster. Professor Trash Wheel collected `r filter(triple_trash_df, wheel== "Professor Trash Wheel") |> pull(weight_tons) |> sum()`tons of trash as of September 2023. Moreover, Gwynnda Trash Wheel collected a total of `r filter(triple_trash_df, wheel== "Gwynnda Trash Wheel", month == "July", year == "2021") |> pull(cigarette_butts) |> sum()` cigarette butts during the month of July 2021. 
 
 ## Problem 3
-
 ```{r}
 mci_baseline_df=
   readxl::read_excel("data/mci_baseline.xlsx", range="A2:F485") |> 
@@ -129,6 +128,19 @@ mci_baseline_df=
   ) |> 
   filter(current_age != age_at_onset)
 ```
+To read-in and clean up the MCI Baseline data set, I performed the following steps:
+
+1. Used the `readxl` to read in the data, restricting the import to only include the columns and rows with data along with the variable names. 
+
+1. `clean_names()` was used to make sure all the imported variables were consistently named. 
+
+1. I changed "sex" from being stored as a binary numeric value to a character vector better identifying which participants are Male vs. Female. 
+
+1. I changed "apoe4" from being stored as a binary numeric value to a character vector better identifying which participants are Carriers vs. Non-Carriers. 
+
+1. As part of the study inclusion criteria, participants had to be free of MCI at study baseline. To make sure participants were free of MCI, I filtered the data to only include participants whose age at study baseline was different that their age of MCI onset. 
+
+
 **Description of the import process and dataset**
 
 `r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r filter(mci_baseline_df, age_at_onset != ".") |> nrow()` went on to develop mci. The average baseline age is `r mci_baseline_df |> pull(current_age) |> mean()` years old. `r filter(mci_baseline_df, sex == "Female", apoe4 == "Carrier") |> nrow() / filter(mci_baseline_df, sex == "Female") |> nrow() * 100` % of the women in the study are APOE4 carriers. 
@@ -137,15 +149,52 @@ mci_baseline_df=
 mci_amyloid_df=
   readxl::read_excel("data/mci_amyloid.xlsx", range="A2:F489") |> 
   janitor::clean_names() |> 
-  rename(id=study_id)
+  rename(id=study_id) |> 
+  pivot_longer(
+    baseline:time_8,
+    names_to = "yrs_since_baseline",
+    values_to = "amyloid_ratio",
+    names_prefix= "time_"
+  ) |> 
+  mutate(
+   yrs_since_baseline= replace(yrs_since_baseline, yrs_since_baseline== "baseline", "0")
+  )
+
 ```
+To read-in and clean up the MCI Amyloid data set, I performed the following steps:
 
-Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values; comment on the steps on the import process and the features of the dataset.
+1. Used the `readxl` to read in the data, restricting the import to only include the columns and rows with data along with the variable names. 
 
-Check whether some participants appear in only the baseline or amyloid datasets, and comment on your findings. Combine the demographic and biomarker datasets so that only participants who appear in both datasets are retained, and briefly describe the resulting dataset; export the result as a CSV to your data directory
+1. `clean_names()` was used to make sure all the imported variables were consistently named. 
+
+1. I renamed the "study_id" variable to "id" to reflect the naming convention in the `mci_baseline_df` dataset.  
+
+1. I changed "apoe4" from being stored as a binary numeric value to a character vector better identifying which participants are Carriers vs. Non-Carriers. 
+
+1. Originally the data was in horizontal format, I decided to use `pivot_longer()` to switch it to vertical. The variable names (baseline: time_8) became values of the "yrs_since_baseline" variable, and the values were filled into the new "amyloid_ratio" variable. Additionally while pivoting, I removed the "time_" prefix.
+
+1. I renamed "baseline" to "0" to ensure that the "yrs_since_baseline" variable had consistent value formatting throughout.
+
+*Features of the dataset**
+
+There are `r nrow(mci_amyloid_df)/5` participants in the dataset corresponding to `r nrow(mci_amyloid_df)` observations overall as each participant has 5 observations of data. There are `r ncol(mci_amyloid_df)` variables in the dataset. The variables are as follows: `r names(mci_amyloid_df)`. id: corresponds to participant id in the study; yrs_since_baseline: Time (in years) elapsed since the study baseline to the visit where biomarker Amyloid _ 42/40 ratio was measured; amyloid_ratio: the amyloid ratio measured
+
+```{r}
+base_unique = anti_join(mci_baseline_df, mci_amyloid_df) 
+
+amyl_unique= anti_join(mci_amyloid_df,mci_baseline_df)|> 
+  distinct(id, .keep_all= T)
+```
+**Unique Participants**
+
+`r nrow(base_unique)` participants appear only only in the baseline dataset and `r nrow(amyl_unique)` participants appear only in the amyloid dataset.
+
+Combine the demographic and biomarker datasets so that only participants who appear in both datasets are retained, and briefly describe the resulting dataset; export the result as a CSV to your data directory
 
 ```{r}
 mci_combined_df=
   inner_join(mci_baseline_df, mci_amyloid_df, by= "id")
 ```
+To combine datasets in a way in which only participants who appear in both datasets were retained, I used the `inner_join` feature and joined them by "id".
 
+**Description of the combined dataset**
