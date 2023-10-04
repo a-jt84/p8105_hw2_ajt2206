@@ -157,7 +157,8 @@ mci_amyloid_df=
     names_prefix= "time_"
   ) |> 
   mutate(
-   yrs_since_baseline= replace(yrs_since_baseline, yrs_since_baseline== "baseline", "0")
+   yrs_since_baseline= replace(yrs_since_baseline, yrs_since_baseline== "baseline", "0"),
+  amyloid_ratio= as.numeric(amyloid_ratio)
   )
 
 ```
@@ -175,6 +176,8 @@ To read-in and clean up the MCI Amyloid data set, I performed the following step
 
 1. I renamed "baseline" to "0" to ensure that the "yrs_since_baseline" variable had consistent value formatting throughout.
 
+1. I changed the "amyloid_ratio" from a character to numeric variable. 
+
 *Features of the dataset**
 
 There are `r nrow(mci_amyloid_df)/5` participants in the dataset corresponding to `r nrow(mci_amyloid_df)` observations overall as each participant has 5 observations of data. There are `r ncol(mci_amyloid_df)` variables in the dataset. The variables are as follows: `r names(mci_amyloid_df)`. id: corresponds to participant id in the study; yrs_since_baseline: Time (in years) elapsed since the study baseline to the visit where biomarker Amyloid _ 42/40 ratio was measured; amyloid_ratio: the amyloid ratio measured
@@ -183,13 +186,14 @@ There are `r nrow(mci_amyloid_df)/5` participants in the dataset corresponding t
 base_unique = anti_join(mci_baseline_df, mci_amyloid_df) 
 
 amyl_unique= anti_join(mci_amyloid_df,mci_baseline_df)|> 
-  distinct(id, .keep_all= T)
+  distinct(id, .keep_all= TRUE)
 ```
 **Unique Participants**
 
+To find out the number of unique participants, I decided to use `anti_join` and make two new datasets that are populated by the unique values in MCI baseline (base_unique) and MCI amyloid dataset (amyl_unique). 
+
 `r nrow(base_unique)` participants appear only only in the baseline dataset and `r nrow(amyl_unique)` participants appear only in the amyloid dataset.
 
-Combine the demographic and biomarker datasets so that only participants who appear in both datasets are retained, and briefly describe the resulting dataset; export the result as a CSV to your data directory
 
 ```{r}
 mci_combined_df=
@@ -198,3 +202,13 @@ mci_combined_df=
 To combine datasets in a way in which only participants who appear in both datasets were retained, I used the `inner_join` feature and joined them by "id".
 
 **Description of the combined dataset**
+There are `r nrow(mci_combined_df)/5` participants in the dataset corresponding to `r nrow(mci_combined_df)` observations overall as each participant has 5 observations of data. There are `r ncol(mci_combined_df)` variables in the dataset.
+
+Participant age at baseline spanned from `r mci_combined_df |> pull(current_age) |> min()` to `r mci_combined_df |> pull(current_age) |> max()`years old. APOE Carriers had an average amyloid ratio of `r filter(mci_combined_df, apoe4== "Carrier", amyloid_ratio != "NA") |> pull(amyloid_ratio) |> mean()` while Non-Carriers had an average ratio of `r filter(mci_combined_df, apoe4== "Non-carrier", amyloid_ratio != "NA") |> pull(amyloid_ratio) |> mean()`.
+
+**Exporting the result as a CSV**
+
+```{r}
+write.csv(mci_combined_df, file = "data/mci_combined_df.csv", row.names = FALSE)
+```
+I used `write.csv` to export my new csv file. I added a `row.names=FALSE` statement as I did not want to add the row number to the csv document. 
