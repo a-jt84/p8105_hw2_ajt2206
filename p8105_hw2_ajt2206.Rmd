@@ -9,8 +9,6 @@ output: github_document
 library(tidyverse)
 ```
 
-
-
 ## Problem 1
 
 Importing data into R
@@ -41,12 +39,125 @@ pols_df=
       prez_dem,
       0 ~ "GOP",
       1 ~ "DEM"
-    )
+    ),
+    president = prez_dem) |> 
+  mutate(
+    year= as.numeric(year)
   ) |> 
-  mutate(president = prez_dem) |> 
   select(-prez_gop, -prez_dem, -day)
- 
 ```
+Steps to import the data:
+
+1. Used `read_csv` to bring data from my file path to R. 
+
+1. Used `clean_names()` to get all variable names in similar format. 
+
+1. Separated the date variable into three separate variables.
+
+1. Recoded the month from number to month name. 
+
+1. Collapsed the prez_gop and prez_dem variables into president variable and also changed the data to be more identifiable "GOP"/"DEM"
+
+1. Converted year from character to numeric variable.
+
+1. Removed prez_gop, prez_dem, and day variables. 
+
+```{r}
+snp_df=
+  read_csv("data/snp.csv") |> 
+  janitor::clean_names() |> 
+  separate(date, into = c("month", "day", "year"), sep= "/") |> 
+  mutate(
+     month= case_match(
+      month,
+      "1" ~ "January",
+      "2" ~ "February",
+      "3" ~ "March",
+      "4" ~ "April",
+      "5" ~ "May",
+      "6" ~ "June",
+      "7" ~ "July", 
+      "8" ~ "August",
+      "9" ~ "September",
+      "10"~ "October",
+      "11"~ "November",
+      "12"~ "December"
+    ),
+    year= as.numeric(year),
+    year = ifelse(year <= 23, year + 2000, year + 1900)
+  ) |> 
+  select(year, month, close)
+```
+Steps to import the data:
+
+1. Used `read_csv` to bring data from my file path to R. 
+
+1. Used `clean_names()` to get all variable names in similar format. 
+
+1. Separated the date variable into three separate variables.
+
+1. Recoded the month from number to month name. 
+
+1. Converted year from character to numeric variable.
+
+1. Added 2000 or 1900 to the years to convert them from YY to YYYY.
+
+1. Reordered the data so year and month come first. 
+
+```{r}
+unemployment_df=
+  read_csv("data/unemployment.csv") |> 
+  janitor::clean_names() |> 
+  pivot_longer(
+    jan:dec,
+    names_to = "month",
+    values_to = "unemployment_rate",
+  ) |> 
+   mutate(
+     month= case_match(
+      month,
+      "jan" ~ "January",
+      "feb" ~ "February",
+      "mar" ~ "March",
+      "apr" ~ "April",
+      "may" ~ "May",
+      "jun" ~ "June",
+      "jul" ~ "July", 
+      "aug" ~ "August",
+      "sep" ~ "September",
+      "oct"~ "October",
+      "nov"~ "November",
+      "dec"~ "December"
+    )
+  )
+```
+Steps to import the data:
+
+1. Used `read_csv` to bring data from my file path to R. 
+
+1. Used `clean_names()` to get all variable names in similar format. 
+
+1. Used `pivot_longer` to change the dataset from horizontal to vertical. Month names moved to "month" and the values moved to "unemployment_rate"
+
+1. Recoded the month from month abbreviation to month name. 
+
+
+```{r}
+data_538 = 
+  left_join(pols_df, snp_df) |>
+  left_join(x = _, y = unemployment_df)
+```
+Combined the datasets! Because I did not specify by what variable, they were combined by the common variables of "month" and "year".
+
+**Description of the data**
+Pols_df: 
+The `pols_df` data has `r nrow(pols_df)` observations and `r ncol(pols_df)` variables. The dataset describes about the breakdown between democrat and republican politicians: governors, senators, and presidents. 
+
+Snp_df:
+The `snp_df` data has `r nrow(snp_df)` observations and `r ncol(snp_df)` variables, ranging from years `r snp_df |> pull(year) |> min()` to `r snp_df |> pull(year) |> max()`. 
+
+Unemployment_df
+The `unemployment_df` data has `r nrow(unemployment_df)` observations and `r ncol(unemployment_df)` variables ranging from years `r unemployment_df |> pull(year) |> min()` to `r unemployment_df |> pull(year) |> max()`. 
 
 ## Problem 2
 
@@ -107,9 +218,11 @@ To combine the datasets, I used the `bind_rows()` function. The datasets were es
 
 **Description of the Data**
 
-* This dataset provides data from May 2014 to August 2018 on the trash collected by three Trash Wheels situated in the Inner Harbor in Baltimore, Maryland. There are `r nrow(triple_trash_df)` observations and `r ncol(triple_trash_df)` variables within this dataset. The variables are as follows `r names(triple_trash_df)`. Key variables include the following. `wheel`: identifies which of the three trash wheels the row corresponds to. `weight_tons`: how much trash in tons in each dumpster. `homes_powered`: an estimation of how many Maryland homes are powered by the trash collected per dumpster. Professor Trash Wheel collected `r filter(triple_trash_df, wheel== "Professor Trash Wheel") |> pull(weight_tons) |> sum()`tons of trash as of September 2023. Moreover, Gwynnda Trash Wheel collected a total of `r filter(triple_trash_df, wheel== "Gwynnda Trash Wheel", month == "July", year == "2021") |> pull(cigarette_butts) |> sum()` cigarette butts during the month of July 2021. 
+* This dataset provides data from May 2014 to August 2018 on the trash collected by three Trash Wheels situated in the Inner Harbor in Baltimore, Maryland. There are `r nrow(triple_trash_df)` observations and `r ncol(triple_trash_df)` variables within this dataset. The variables are as follows `r names(triple_trash_df)`. Key variables include the following. `wheel`: identifies which of the three trash wheels the row corresponds to. `weight_tons`: how much trash in tons in each dumpster. `homes_powered`: an estimation of how many Maryland homes are powered by the trash collected per dumpster. Professor Trash Wheel collected `r filter(triple_trash_df, wheel== "Professor Trash Wheel") |> pull(weight_tons) |> sum()` tons of trash as of September 2023. Moreover, Gwynnda Trash Wheel collected a total of `r filter(triple_trash_df, wheel== "Gwynnda Trash Wheel", month == "July", year == "2021") |> pull(cigarette_butts) |> sum()` cigarette butts during the month of July 2021. 
 
 ## Problem 3
+
+**Importing and cleaning MCI Baseline Data**
 ```{r}
 mci_baseline_df=
   readxl::read_excel("data/mci_baseline.xlsx", range="A2:F485") |> 
@@ -143,7 +256,7 @@ To read-in and clean up the MCI Baseline data set, I performed the following ste
 
 **Description of the import process and dataset**
 
-`r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r filter(mci_baseline_df, age_at_onset != ".") |> nrow()` went on to develop mci. The average baseline age is `r mci_baseline_df |> pull(current_age) |> mean()` years old. `r filter(mci_baseline_df, sex == "Female", apoe4 == "Carrier") |> nrow() / filter(mci_baseline_df, sex == "Female") |> nrow() * 100` % of the women in the study are APOE4 carriers. 
+`r nrow(mci_baseline_df)` participants met the inclusion criteria of the study and were included in the data. One participant was excluded as they had mci at Baseline. Of the `r nrow(mci_baseline_df)` participants, `r filter(mci_baseline_df, age_at_onset != ".") |> nrow()` went on to develop mci. The average baseline age is `r mci_baseline_df |> pull(current_age) |> mean() |> round(2)` years old. `r round(filter(mci_baseline_df, sex == "Female", apoe4 == "Carrier") |> nrow() / filter(mci_baseline_df, sex == "Female") |> nrow() * 100, 2)` % of the women in the study are APOE4 carriers. 
 
 ```{r}
 mci_amyloid_df=
