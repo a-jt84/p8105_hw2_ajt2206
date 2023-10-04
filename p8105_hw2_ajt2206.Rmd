@@ -239,7 +239,7 @@ mci_baseline_df=
       0 ~ "Non-carrier",
       1 ~ "Carrier")
   ) |> 
-  filter(current_age != age_at_onset)
+  filter(current_age < age_at_onset | age_at_onset == ".")
 ```
 To read-in and clean up the MCI Baseline data set, I performed the following steps:
 
